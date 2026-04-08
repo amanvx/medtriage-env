@@ -43,36 +43,15 @@ TASKS = ["task1_single", "task2_queue", "task3_incomplete"]
 # ---------------------------------------------------------------------------
 
 def log_start(task: str, env: str, model: str) -> None:
-    print(json.dumps({
-        "type": "START",
-        "task": task,
-        "env": env,
-        "model": model,
-        "timestamp": time.time(),
-    }), flush=True)
+    print(f"[START] task={task} env={env} model={model}", flush=True)
 
 
 def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
-    print(json.dumps({
-        "type": "STEP",
-        "step": step,
-        "action": action,
-        "reward": reward,
-        "done": done,
-        "error": error,
-        "timestamp": time.time(),
-    }), flush=True)
+    print(f"[STEP] step={step} action={action} reward={reward:.4f} done={done} error={error}", flush=True)
 
 
 def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
-    print(json.dumps({
-        "type": "END",
-        "success": success,
-        "steps": steps,
-        "score": score,
-        "rewards": rewards,
-        "timestamp": time.time(),
-    }), flush=True)
+    print(f"[END] success={success} steps={steps} score={score:.4f} rewards={rewards}", flush=True)
 
 
 # ---------------------------------------------------------------------------
@@ -195,6 +174,7 @@ def get_model_action(
             ],
             temperature=0.2,
             max_tokens=512,
+            response_format={"type": "json_object"},
         )
         content = response.choices[0].message.content.strip()
         # Strip markdown fences if present
@@ -286,7 +266,10 @@ def main() -> None:
     if not HF_TOKEN:
         raise RuntimeError("HF_TOKEN is required. Set it in your environment before running inference.py")
 
-    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+    client = OpenAI(
+        base_url=API_BASE_URL,
+        api_key=HF_TOKEN
+    )
     env = MedTriageHTTPEnv(base_url=ENV_BASE_URL)
 
     results = []
