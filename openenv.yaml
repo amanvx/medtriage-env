@@ -1,0 +1,127 @@
+name: medtriage-env
+version: "1.0.0"
+description: >
+  Clinical note triage environment for AI agents. The agent receives patient
+  clinical notes and must assign urgency levels, route to departments, and
+  identify missing critical information. Simulates real emergency department
+  and hospital triage workflows.
+
+tags:
+  - openenv
+  - medical
+  - triage
+  - healthcare
+  - nlp
+  - real-world
+
+author: MedTriage-Env Team
+license: MIT
+
+observation_space:
+  type: object
+  description: TriageObservation — patient notes, task description, feedback
+  fields:
+    task_id:
+      type: string
+      description: Active task identifier
+    task_description:
+      type: string
+      description: Natural language task instructions
+    patients:
+      type: array
+      description: List of PatientNote objects with clinical data
+    step_number:
+      type: integer
+      description: Current step in the episode
+    max_steps:
+      type: integer
+      description: Maximum allowed steps
+    feedback:
+      type: string
+      description: Feedback from previous action
+    cumulative_reward:
+      type: float
+      description: Total reward accumulated so far
+    done:
+      type: boolean
+      description: Whether the episode is complete
+
+action_space:
+  type: object
+  description: TriageAction — the agent's triage decision
+  fields:
+    urgency_level:
+      type: string
+      enum: [CRITICAL, HIGH, MEDIUM, LOW, NON_URGENT]
+      description: Urgency classification
+    reasoning:
+      type: string
+      description: Clinical reasoning justifying the decision
+    department:
+      type: string
+      description: Target routing department
+    confidence:
+      type: float
+      minimum: 0.0
+      maximum: 1.0
+      description: Agent confidence in its decision
+    missing_info:
+      type: array
+      items: string
+      description: Missing critical data items (Task 3)
+    patient_ids:
+      type: array
+      items: string
+      description: Priority-ordered patient IDs (Task 2)
+
+reward:
+  type: float
+  minimum: 0.0
+  maximum: 1.0
+  description: >
+    Shaped reward with partial credit. Combines urgency accuracy (with
+    distance-based partial credit), department routing, reasoning quality,
+    and missing info identification. Penalizes overconfidence on wrong
+    or incomplete cases.
+
+tasks:
+  - id: task1_single
+    name: Single Patient Urgency Classification
+    difficulty: easy
+    description: >
+      Classify a single patient's urgency level and route to the correct
+      department with clinical reasoning. Partial credit for correct direction.
+    max_steps: 5
+    reward_range: [0.0, 1.0]
+
+  - id: task2_queue
+    name: Multi-Patient Queue Prioritization
+    difficulty: medium
+    description: >
+      Order 5 waiting room patients from highest to lowest priority.
+      Scored using concordant pair ordering (Kendall tau). Bonus for
+      correctly identifying the most critical patient.
+    max_steps: 5
+    reward_range: [0.0, 1.0]
+
+  - id: task3_incomplete
+    name: Incomplete Notes — Flag and Triage
+    difficulty: hard
+    description: >
+      Triage patients with deliberately incomplete clinical notes. Agent
+      must identify what information is missing AND assign urgency despite
+      uncertainty. Penalizes overconfidence with incomplete data.
+    max_steps: 7
+    reward_range: [0.0, 1.0]
+
+endpoints:
+  reset: POST /reset
+  step: POST /step
+  state: GET /state
+  health: GET /health
+  tasks: GET /tasks
+
+docker:
+  port: 7860
+  build_context: "."
+  base_image: python:3.11-slim
