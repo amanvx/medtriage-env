@@ -1,0 +1,20 @@
+[project]
+name = "medtriage-env"
+version = "1.0.0"
+description = "Clinical note triage OpenEnv environment"
+authors = [{ name = "Aman Vishwakarma" }]
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "httpx",
+    "openai",
+    "pyyaml"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
